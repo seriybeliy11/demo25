@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  MediaWiki:
+    container_name: wiki
+    image: mediawiki
+    restart: always
+    ports:
+      - 8080:80  # Изменили порт, это нормально
+    links:
+      - database
+    volumes:
+      - images:/var/www/html/images
+      # - ./LocalSettings.php:/var/www/html/LocalSettings.php
+  database:
+    container_name: mariadb  # Изменили имя контейнера и образ на mariadb
+    image: mariadb
+    environment:
+      MYSQL_DATABASE: mediawiki
+      MYSQL_USER: wiki
+      MYSQL_PASSWORD: P@ssw0rd
+      MYSQL_RANDOM_ROOT_PASSWORD: 'yes'
+    volumes:
+      - dbvolume:/var/lib/mariadb  # Правильное место для данных mariadb
+volumes:
+  dbvolume:
+    external: true
