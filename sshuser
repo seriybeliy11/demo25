@@ -1,0 +1,67 @@
+Создание пользователя для подключения по ssh в Linux
+
+Создание локальных учетных записей
+sudo useradd sshuser -m -U -s /bin/bash
+
+где:
+
+—m — если домашнего каталога пользователя не существует, то он будет создан
+—U — создаётся группа с тем же именем, что и у пользователя, и добавляет пользователя в эту группу
+—s /bin/bash — задаётся имя регистрационной оболочки пользователя
+
+sudo passwd sshuser
+P@ssw0rd
+P@ssw0rd
+
+Реализуем возможность запуска утилиты sudo без дополнительной аутентификации для пользователя sshuser
+sudo usermod -aG astra-admin sshuser
+sudo pdpl-user -i 63 sshuser
+
+правим конфигурационный файл /etc/sudoers:
+sshuser ALL=(ALL:ALL) NOPASSWD: ALL
+
+Выполнить вход под пользователем sshuser
+Выполнить команду
+sudo astra-sudo-control disable
+и попытаться выполнить sudo -i или иную другую команду требующую повышения привелегий до root
+
+Настройка безопасного удаленного доступа на серверах HQ-SRV и BR-SRV
+
+Установить ssh сервер (если не стоял)
+
+sudo apt install openssh-server
+
+Для подключения используйте порт 2024
+
+Разрешите подключения только пользователю sshuser
+
+Ограничьте количество попыток входа до двух
+sudo nano /etc/ssh/sshd_config
+
+
+Port 2024
+
+MaxAuthTries 2
+
+IgnoreRhosts yes
+
+HostbasedAuthentication no
+
+PasswordAuthentication yes
+
+UsePrivilegeSeparation yes
+
+Banner /etc/ssh/bannermotd
+
+Match User sshuser
+
+    AllowUsers  sshuser
+            
+
+Настройте баннер «Authorized access only»
+nano /etc/ssh/bannermotd
+
+Authorized access only
+
+Перезагрузить машину и попробовать подключиться от пользователя user
+
