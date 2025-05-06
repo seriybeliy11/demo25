@@ -1,0 +1,119 @@
+Конфигурация для каждого сетевого устройства
+Eltex Router (ISP)
+Copy
+@@@@@@@@@@@@@@@@@@@@@ Настройка Eltex @@@@@@@@@@@@@@@@@@@
+
+@@@@@@@@@@@@@@@@@@@@@@ Базовая настройка первого интерфейса (смотрит в интернет) @@@@@@@@@@@@@@@@
+configure
+system host-name ISP
+interface gigabitethernet 1/0/1
+no switchport access vlan
+mode routerport
+ip address dhcp
+ip firewall disable
+do commit & do confirm
+
+@@@@@@@@@@@@@@@@@@@@@@@ Базовая настройка второго интерфейса (смотрит на Mikrotik 1) @@@@@@@@@@@@@@@@@@@@
+interface gigabitethernet 1/0/2
+mode routerport
+ip address 172.16.4.1/28
+exit
+
+@@@@@@@@@@@@@@@@@@@@ Базовая настройка третьего интерфейса (смотрит на Mikrotik 2) @@@@@@@@@@@@@@@@@@@@@@@@@@
+interface gigabitethernet 1/0/3
+mode routerport
+ip address 172.16.5.1/28
+do commit & do confirm
+
+@@@@@@@@@@@@@@@@@@@@@@ Настройка NAT и доступа в интернет @@@@@@@@@@@@@@@@@@
+domain lookup enable
+domain name-server 8.8.8.8
+nat source
+ruleset first
+to interface gigabitethernet 1/0/1
+rule 11
+match source-address any
+action source-nat interface
+enable
+exit
+exit
+do sh ip interfaces
+ip route 0.0.0.0/0 10.23.68.1
+do commit & do confirm
+
+@@@@@@@@@@@@ OSPF @@@@@@@@@@@@@@
+router ospf 1
+router-id 1.1.1.1
+area 0.0.0.0
+network 172.16.4.0/28
+network 172.16.5.0/28
+enable
+exit
+do commit & do confirm
+
+@@@@@@@@@@@@@@@@@@@@@@@@@ OSPF neighbors @@@@@@@@@@@@@@@@@@@@@@@@@
+interface gigabitethernet 1/0/2
+ip firewall disable
+ip ospf instance 1
+ip ospf network point-to-point
+ip ospf
+exit
+
+interface gigabitethernet 1/0/3
+ip firewall disable
+ip ospf instance 1
+ip ospf network point-to-point
+ip ospf
+exit
+do commit & do confirm
+
+@@@@@@@@@@@@@@@@@@@@@@@@@@@ Eltex настроен @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+
+
+
+Mikrotik Router 1 (First-RTR)
+Copy
+@@@@@@@@@@ Настройка Mikrotik 1 @@@@@
+/system identity set name=First-RTR
+/ip address add address=172.16.4.2/28 interface=ether1
+/ip route add dst-address=0.0.0.0/0 gateway=172.16.4.1
+
+@@@@@@@@@@ Настройка OSPF на Mikrotik 1 @@@@@@
+/routing ospf instance add name=OSPF1 router-id=2.2.2.2
+/routing ospf network add network=172.16.4.0/28 area=backbone
+/routing ospf interface add interface=ether1 network-type=point-to-point
+/ip firewall filter print
+/ip firewall filter disable numbers=5
+
+@@@@@@@@@@@ Настройка DHCP и статики @@@@@@@
+/interface bridge port print
+/interface bridge port remove numbers=0
+/interface bridge port remove numbers=0
+/ip address add address=192.168.10.1/26 interface=ether2
+/ip address add address=192.168.20.1/28 interface=ether3
+/ip pool add name=dhcp-pool ranges=192.168.20.2-192.168.20.14
+/ip dhcp-server add address-pool=dhcp-pool interface=ether3 disabled=no name=local-dhcp
+/ip dhcp-server network add address=192.168.20.0/28 gateway=192.168.20.1 dns-server=8.8.8.8,1.1.1.1
+
+
+
+Mikrotik Router 2 (Second-RTR)
+Copy
+@@@@@@@@@@ Настройка Mikrotik 2 @@@@@
+/system identity set name=Second-RTR
+/ip address add address=172.16.5.2/28 interface=ether1
+/ip address add address=172.16.6.1/28 interface=ether2
+/ip route add dst-address=0.0.0.0/0 gateway=172.16.5.1
+
+@@@@@@@@@@ Настройка OSPF на Mikrotik 2 @@@@@@
+/routing ospf instance add name=OSPF1 router-id=3.3.3.3
+/routing ospf network add network=172.16.5.0/28 area=backbone
+/routing ospf interface add interface=ether1 network-type=point-to-point
+/ip firewall filter print
+/ip firewall filter disable numbers=5
+
+@@@@@@@@@@@ Настройка NAT и статики @@@@@@@
+/ip firewall nat add chain=srcnat action=masquerade out-interface=ether1
+/ip firewall nat add chain=dstnat protocol=tcp dst-port=80 action=dst-nat to-ports=8080 to-addresses=172.16.6.2
+/ip firewall nat add chain=dstnat protocol=tcp dst-port=2024 action=dst-nat to-ports=2024 to-addresses=172.16.6.2
