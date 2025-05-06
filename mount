@@ -1,0 +1,67 @@
+Настройка на Second-SRV
+1. Создание и форматирование раздела
+Создайте новый раздел:
+
+Используйте fdisk или parted для создания нового раздела. Например, с помощью fdisk:
+sudo fdisk /dev/sdX  # Замените /dev/sdX на ваш диск
+В fdisk создайте новый раздел:
+Нажмите n для создания нового раздела.
+Следуйте инструкциям для выбора размера и типа раздела.
+Нажмите w для сохранения изменений и выхода.
+Отформатируйте раздел в файловую систему ext4:
+
+sudo mkfs.ext4 /dev/sdX1  # Замените /dev/sdX1 на ваш новый раздел
+Создайте точку монтирования и смонтируйте раздел:
+
+sudo mkdir -p /srv/nfs
+sudo mount /dev/sdX1 /srv/nfs  # Замените /dev/sdX1 на ваш новый раздел
+Добавьте запись в /etc/fstab для автоматического монтирования при загрузке:
+
+echo '/dev/sdX1 /srv/nfs ext4 defaults 0 2' | sudo tee -a /etc/fstab  # Замените /dev/sdX1 на ваш новый раздел
+2. Настройка сервера NFS
+Установите пакет NFS:
+
+sudo apt update
+sudo apt install nfs-kernel-server
+Настройте экспорт каталога /srv/nfs:
+
+Отредактируйте файл /etc/exports:
+Copy
+sudo nano /etc/exports
+Добавьте следующую строку:
+Copy
+/srv/nfs 172.16.5.0/28(rw,sync,no_subtree_check)
+Сохраните и закройте файл.
+Экспортируйте каталог и перезапустите службу NFS:
+
+sudo exportfs -a
+sudo systemctl restart nfs-kernel-server
+
+
+
+
+Настройка на First-CLI
+
+3. Настройка автомонтирования NFS
+Установите пакет NFS:
+
+sudo apt update
+sudo apt install nfs-common
+Создайте точку монтирования:
+
+Copy
+sudo mkdir -p /mnt/nfs
+Настройте автомонтирование в /etc/fstab:
+
+Отредактируйте файл /etc/fstab:
+Copy
+sudo nano /etc/fstab
+Добавьте следующую строку:
+Copy
+172.16.5.2:/srv/nfs /mnt/nfs nfs defaults 0 0
+Сохраните и закройте файл.
+Смонтируйте каталог вручную (для проверки):
+
+Copy
+sudo mount -a
+Теперь каталог /srv/nfs на Second-SRV будет автоматически монтироваться в /mnt/nfs на First-CLI при каждой загрузке системы.
