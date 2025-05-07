@@ -1,0 +1,29 @@
+sudo apt update
+sudo apt install cups
+sudo nano /etc/cups/cupsd.conf
+
+ <Location />
+   Order allow,deny
++  Allow localhost
++  Allow 192.168.164.0/24 # Разрешаем доступ из вашей сети
+ </Location>
+
+ServerName 192.168.164.128
+
+sudo systemctl restart cups
+sudo systemctl enable cups
+sudo usermod -aG lpadmin sshuser
+sudo lpstat -p -d
+sudo nano /etc/apt/sources.list
+sudo apt update
+sudo apt install cups-pdf
+sudo systemctl restart cups
+
+подключение cups-pdf:/
+имя  "Виртуальный PDF-принтер"
+Generic
+Generic CUPS-PDF Printer (w/ options) (en)
+Перейдите в раздел "Printers".
+Найдите добавленный сетевой принтер (например, "PDF-принтер_с_сервера").
+В выпадающем меню "Administration" (или аналогичном) рядом 
+с принтером выберите Set As Default (Установить как по умолчанию).

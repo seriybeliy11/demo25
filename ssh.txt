@@ -1,0 +1,40 @@
+﻿sudo useradd sshuser -m -u 1010 -U -s /bin/bash
+sudo passwd sshuser
+P@ssw0rd
+sudo usermod -aG astra-admin sshuser
+sudo pdpl-user -i 63 sshuser
+nano /etc/sudoers:
+sshuser ALL=(ALL:ALL) NOPASSWD: ALL
+Выполнить вход под пользователем sshuser
+sudo astra-sudo-control disable
+sudo -i
+на серверах
+Установить ssh сервер (если не стоял)
+sudo apt install openssh-server
+sudo nano /etc/ssh/sshd_config
+Port 2024
+MaxAuthTries 2
+IgnoreRhosts yes
+PermitRootLogin no
+HostbasedAuthentication no
+PasswordAuthentication yes
+UsePrivilegeSeparation yes
+Banner /etc/ssh/bannermotd
+Match User sshuser
+AllowUsers  sshuser
+nano /etc/ssh/bannermotd
+Authorized access only
+sudo systemctl restart ssh sshd
+
+sudo apt install -y openssh-server openssh-client
+sudo adduser admin
+Потом переходим на второй сервер и 
+пробуем подключиться по ssh к первому 
+ssh admin@<ip первого компа>
+Как только зашли пишем exit и пишем команды: 
+ssh-keygen (тут надо будет найти 
+"your public key has been saved in ..." и 
+вставить путь в команду ниже) ssh-copy-id -i 
+<путь из паблик кей> <пользователь>@<ip первого компа>
+Потом так же повторяем со второго сервера на первый!
+

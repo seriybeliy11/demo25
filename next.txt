@@ -1,0 +1,12 @@
+curl -fsSL https://get.docker.com -o get-docker.sh
+sudo sh ./get-docker.sh
+docker -v
+docker compose versioncd 
+/opt
+mkdir twnextcloud
+cd twnextcloud
+nano docker-compose.yml
+docker compose pull
+docker compose up
+
+http://ip-сервера:8081

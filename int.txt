@@ -1,0 +1,17 @@
+lsblk
+sudo mount /dev/(sdb1) /mnt
+ls /mnt
+cp /mnt/astra.iso /home/(sshuser)
+ls
+sudo mount -t iso9660 -o loop /home/astra.iso /media/cdrom0
+ls /media/cdrom0
+lsblk
+sudo apt update
+sudo apt install network-manager
+
+Проверить соединение и ip
+nmcli connection show
+ip -br a
+Переименовать "Проводное подключение 1" в имя сетевого адаптера и перезапустить соединение:
+nmcli connection modify 'Проводное подключение 1' con-name enp1s0
+nmcli connection up enp1s0

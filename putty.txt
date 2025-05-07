@@ -1,0 +1,3 @@
+wget http://ftp.ru.debian.org/debian/pool/main/p/putty/putty_0.78-2+deb12u2_amd64.deb
+wget http://ftp.ru.debian.org/debian/pool/main/p/putty/putty-tools_0.78-2+deb12u2_amd64.deb
+sudo dpkg -i putty-tools_0.78-2+deb12u2_amd64.deb putty_0.78-2+deb12u2_amd64.deb

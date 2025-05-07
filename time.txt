@@ -1,0 +1,36 @@
+mikrot
+/system clock set date=2022-01-01 time=12:00:00
+# Устанавливаем часовой пояс для Москвы
+/system clock set time-zone-name=Europe/Moscow
+/system ntp client set enabled=yes
+/system ntp client set primary-ntp=217.160.0.1 secondary-ntp=193.204.114.232
+/system clock print
+/system ntp client print
+217.170.87.229
+ru.pool.ntp.org
+eltex
+clock timezone MSK +3
+ntp client enable
+ntp server 217.160.0.1
+ntp server 193.204.114.232
+ntp server pool.ntp.org
+ntp server ru.pool.ntp.org
+show clock
+show ntp status
+
+nano /etc/selinux/config
+SELINUX=permissive
+setenforce 0
+
+SRV
+sudo apt update
+sudo apt install chrony
+sudo nano /etc/chrony/chrony.conf
+# Найти строки pool или server, закомментировать или удалить
+pool pool.ntp.org iburst
+pool ru.pool.ntp.org iburst
+sudo systemctl restart chrony
+sudo systemctl status chrony
+chronyc sources
+chronyc tracking
+date

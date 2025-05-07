@@ -1,0 +1,3 @@
+sudo dpkg -i file.deb
+sudo apt --fix-broken install
+yandex-browser-enterprise

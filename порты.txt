@@ -1,0 +1,71 @@
+Предположим, IP-адрес Second-SRV в локальной сети, подключенной к Second-RTR 192.168.164.129. 
+Внешний интерфейс на Second-RTR называется ether1-wan.
+Команда в терминале MikroTik на Second-RTR:
+/ip firewall nat add chain=dstnat protocol=tcp dst-port=80 
+in-interface=ether1-wan action=dst-nat to-addresses=192.168.164.129 to-ports=8080 
+comment="Wiki service port forward"
+
+Предположим, IP-адрес Second-SRV 192.168.164.129. Внешний интерфейс на Second-RTR - ether1-wan.
+Команда в терминале MikroTik на Second-RTR:
+/ip firewall nat add chain=dstnat protocol=tcp dst-port=2024 
+in-interface=ether1-wan action=dst-nat to-addresses=192.168.164.129 to-ports=2024 
+comment="SSH to Second-SRV port forward"
+
+Предположим, IP-адрес First-SRV в локальной сети, подключенной к First-RTR, равен 192.168.1.10 (пример). 
+Внешний интерфейс на First-RTR называется ether1-wan.
+Команда в терминале MikroTik на First-RTR:
+/ip firewall nat add chain=dstnat protocol=tcp dst-port=2024 
+in-interface=ether1-wan action=dst-nat to-addresses=192.168.1.10 to-ports=2024 
+comment="SSH to First-SRV port forward"
+
+/interface print
+/ip address print
+/ip route print
+
+На 2-RTR открываем на редактирование файл /etc/nftables/2-rtr.nft
+nano /etc/nftables/bt-rtr.nft
+table inet nat {
+	chain PREROUTING {
+	type nat hook prerouting priority filter;
+	ip daddr 172.16.5.2 tcp dport 80 dnat ip to 192.168.200.2:8080
+	}
+	chain POSTROUTING {
+	type nat hook postrouting priority srcnat;
+	oifname 'ensl8' masquerade
+	}
+}
+С HQ-CLI в браузере переходим по IP адресу (WAN) BR-RTR должны попасть на страницу MediaWiki
+http://172.16.5.2
+
+На 1-RTR открываем на редактирование файл /etc/nftables/1-rtr.nft
+nano /etc/nftables/1-rtr.nft
+table inet nat {
+	chain PREROUTING {
+	type nat hook prerouting priority filter;
+	ip daddr 172.16.4.2 tcp dport 2024 dnat ip to 132.168.100.2:2024
+	}
+	chain POSTROUTING {
+	type nat hook postrouting priority srcnat;
+	oifname "ensl8" masquerade
+	}
+}
+С HQ-CLI подключаемся по ssh к 1-RTR по порту 2024
+ssh sshuser@172.16.4.2 -p 2024
+Должны попасть на 1-SRV
+
+На 2-RTR открываем на редактирование файл /etc/nftables/2-rtr.nft
+nano /etc/nftables/2-rtr.nft
+table inet nat {
+	chain PREROUTING {
+	type nat hook prerouting priority filter;
+	ip daddr 172.16.5.2 tcp dport 80 dnat ip to 192.168.200.2:8080
+	ip daddr 172.16.5.2 tcp dport 2024 dnat ip to 192.168.200.2:2024
+	}
+	chain POSTROUTING {
+	type nat hook postrouting priority srenat;
+	oifname ”ensl8” masquerade
+	}
+}
+С HQ-CLI подключаемся по ssh к 2-RTR по порту 2024
+ssh sshuser@172.16.5.2 -p 2024
+Должны попасть на 2-SRV 

@@ -1,0 +1,120 @@
+version: '3.8'
+
+services:
+  MediaWiki:
+    container_name: wiki
+    image: mediawiki
+    restart: always
+    ports:
+      - 8080:80  # Изменили порт, это нормально
+    links:
+      - database
+    volumes:
+      - images:/var/www/html/images
+      # - ./LocalSettings.php:/var/www/html/LocalSettings.php
+  database:
+    container_name: mariadb  # Изменили имя контейнера и образ на mariadb
+    image: mariadb
+    environment:
+      MYSQL_DATABASE: mediawiki
+      MYSQL_USER: wiki
+      MYSQL_PASSWORD: P@ssw0rd
+      MYSQL_RANDOM_ROOT_PASSWORD: 'yes'
+    volumes:
+      - dbvolume:/var/lib/mariadb  # Правильное место для данных mariadb
+volumes:
+  dbvolume:
+    external: true
+
+
+
+version: '3.8'
+
+volumes:
+  twnextcloud:
+  db:
+
+services:
+  db:
+    image: mariadb:10.6
+    restart: unless-stopped
+    command: --transaction-isolation=READ-COMMITTED --log-bin=binlog --binlog-format=ROW
+    volumes:
+      - db:/var/lib/mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=RootPass
+      - MYSQL_PASSWORD=NextPass
+      - MYSQL_DATABASE=nextcloudtw
+      - MYSQL_USER=nextcloudtw
+
+  app:
+    image: nextcloud
+    restart: unless-stopped
+    ports:
+      - 8081:80
+    links:
+      - db
+    volumes:
+      - twnextcloud:/var/www/html
+    environment:
+      - MYSQL_PASSWORD=NextPass
+      - MYSQL_DATABASE=nextcloudtw
+      - MYSQL_USER=nextcloudtw
+      - MYSQL_HOST=db
+
+
+
+version: '3.8'
+
+services:
+  db:
+    image: bitnami/mariadb:latest
+    container_name: moodle_docker_db_1
+    environment:
+      - MARIADB_ROOT_PASSWORD=your_root_password # Установите надежный пароль
+      - MARIADB_DATABASE=bitnami_moodle
+      - MARIADB_USER=bn_moodle
+      - MARIADB_PASSWORD=your_db_password # Установите надежный пароль
+    volumes:
+      - db_data:/bitnami/mariadb
+    networks:
+      - moodle_network
+
+  moodle:
+    image: bitnami/moodle:latest
+    container_name: moodle_docker_moodle_1
+    ports:
+      - "8080:8080"
+      - "8443:8443"
+    environment:
+      - MOODLE_DATABASE_HOST=db
+      - MOODLE_DATABASE_PORT=3306
+      - MOODLE_DATABASE_USER=bn_moodle
+      - MOODLE_DATABASE_PASSWORD=your_db_password # Должен совпадать с MARIADB_PASSWORD
+      - MOODLE_DATABASE_NAME=bitnami_moodle
+      - MOODLE_USERNAME=admin # Имя пользователя администратора Moodle
+      - MOODLE_PASSWORD=your_moodle_admin_password # Установите надежный пароль для администратора Moodle
+      - MOODLE_EMAIL=admin@example.com # Email администратора
+      - MOODLE_SITE_NAME="My Moodle Site" # Название вашего сайта Moodle
+      - MOODLE_HOST=192.168.164.128 # Укажите IP-адрес вашего сервера или доменное имя, если есть
+
+    volumes:
+      - moodle_data:/bitnami/moodle
+      - moodle_files_data:/bitnami/moodledata
+
+    depends_on:
+      - db
+    networks:
+      - moodle_network
+
+volumes:
+  db_data:
+    driver: local
+  moodle_data:
+    driver: local
+  moodle_files_data:
+    driver: local
+
+networks:
+  moodle_network:
+    driver: bridge

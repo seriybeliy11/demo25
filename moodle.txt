@@ -1,0 +1,11 @@
+curl -fsSL https://get.docker.com -o get-docker.sh
+sudo sh ./get-docker.sh
+sudo apt install docker-compose -y
+mkdir moodle_docker
+cd moodle_docker
+nano docker-compose.yml
+docker-compose up -d
+docker-compose ps
+http://<IP_First-SRV>:8080
+admin
+пароль your_moodle_admin_password
